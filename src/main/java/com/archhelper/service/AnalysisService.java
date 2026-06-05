@@ -46,7 +46,11 @@ public class AnalysisService {
     }
 
     public AnalysisResult analyze(String repoUrl, String branch) throws IOException {
-        ClonedRepo cloned = gitRepoService.clone(repoUrl, branch);
+        return analyze(repoUrl, branch, null, null);
+    }
+
+    public AnalysisResult analyze(String repoUrl, String branch, String username, String token) throws IOException {
+        ClonedRepo cloned = gitRepoService.clone(repoUrl, branch, username, token);
         Path root = cloned.path();
         List<String> warnings = new ArrayList<>();
         try {

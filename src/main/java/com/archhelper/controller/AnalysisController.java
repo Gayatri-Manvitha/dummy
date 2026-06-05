@@ -34,7 +34,9 @@ public class AnalysisController {
             return ResponseEntity.badRequest().body(Map.of("error", "repoUrl is required"));
         }
         try {
-            AnalysisResult result = analysisService.analyze(request.getRepoUrl(), request.getBranch());
+            AnalysisResult result = analysisService.analyze(
+                    request.getRepoUrl(), request.getBranch(),
+                    request.getUsername(), request.getToken());
             return ResponseEntity.ok(result);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

@@ -189,6 +189,9 @@ function OutputsTab({ outputs }) {
 function App() {
     const [repoUrl, setRepoUrl] = useState("");
     const [branch, setBranch] = useState("");
+    const [username, setUsername] = useState("");
+    const [token, setToken] = useState("");
+    const [showAuth, setShowAuth] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [result, setResult] = useState(null);
@@ -201,14 +204,24 @@ function App() {
             const res = await fetch("/api/analyze", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ repoUrl: repoUrl.trim(), branch: branch.trim() })
+                body: JSON.stringify({
+                    repoUrl: repoUrl.trim(),
+                    branch: branch.trim(),
+                    username: username.trim(),
+                    token: token.trim()
+                })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Analysis failed");
             setResult(data);
             setTab("arch");
         } catch (e) {
-            setError(e.message);
+            const msg = String(e.message || e);
+            const authIssue = /auth|401|403|not authorized|denied|credential/i.test(msg);
+            setError(authIssue && !token
+                ? msg + "  —  This looks like a private repo. Click \"Private repo?\" below and add a personal access token."
+                : msg);
+            if (authIssue && !token) setShowAuth(true);
         } finally {
             setLoading(false);
         }
@@ -247,7 +260,25 @@ function App() {
                     Try:
                     <a onClick={() => useExample("https://github.com/spring-projects/spring-petclinic")}>spring-petclinic</a>
                     <a onClick={() => useExample("https://github.com/spring-guides/gs-rest-service")}>gs-rest-service</a>
+                    <a style={{ float: "right" }} onClick={() => setShowAuth(s => !s)}>
+                        {showAuth ? "▲ hide credentials" : "🔒 Private repo?"}
+                    </a>
                 </div>
+
+                {showAuth && (
+                    <div className="auth-box">
+                        <div className="auth-hint">
+                            For a private HTTPS repo, provide a <strong>personal access token</strong> (GitHub: Settings → Developer settings → Tokens, with <code>repo</code> scope). Username is optional. Credentials are used only for this clone and never stored.
+                        </div>
+                        <div className="search-row">
+                            <input className="input" style={{ flex: "0 0 200px" }} placeholder="username (optional)"
+                                   value={username} onChange={e => setUsername(e.target.value)} onKeyDown={onKey} />
+                            <input className="input grow" type="password" placeholder="personal access token"
+                                   value={token} onChange={e => setToken(e.target.value)} onKeyDown={onKey} />
+                        </div>
+                    </div>
+                )}
+
                 {error && <div className="error">{error}</div>}
             </div>
 

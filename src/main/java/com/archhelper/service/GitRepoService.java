@@ -2,6 +2,7 @@ package com.archhelper.service;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,9 +30,14 @@ public class GitRepoService {
     public record ClonedRepo(Path path, String branch) {}
 
     public ClonedRepo clone(String repoUrl, String branch) throws IOException {
+        return clone(repoUrl, branch, null, null);
+    }
+
+    public ClonedRepo clone(String repoUrl, String branch, String username, String token) throws IOException {
         String normalized = normalizeUrl(repoUrl);
         Path tempDir = Files.createTempDirectory("arch-helper-");
-        log.info("Cloning {} into {}", normalized, tempDir);
+        log.info("Cloning {} into {} (auth: {})", normalized, tempDir,
+                (token != null && !token.isBlank()) ? "yes" : "no");
 
         var cloneCmd = Git.cloneRepository()
                 .setURI(normalized)
@@ -39,6 +45,14 @@ public class GitRepoService {
                 .setDepth(1)
                 .setCloneSubmodules(false)
                 .setTimeout(cloneTimeoutSeconds);
+
+        // Private repos over HTTPS: authenticate with a personal access token.
+        if (token != null && !token.isBlank()) {
+            // For GitHub/GitLab PATs the token is the password; a username is often
+            // optional, so default it to the token when not supplied.
+            String user = (username != null && !username.isBlank()) ? username.trim() : token.trim();
+            cloneCmd.setCredentialsProvider(new UsernamePasswordCredentialsProvider(user, token.trim()));
+        }
 
         if (branch != null && !branch.isBlank()) {
             cloneCmd.setBranch(branch.trim());

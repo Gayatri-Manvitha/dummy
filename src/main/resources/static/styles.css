@@ -68,6 +68,13 @@ body {
 .examples a { color: var(--accent); cursor: pointer; text-decoration: none; margin-right: 12px; }
 .examples a:hover { text-decoration: underline; }
 
+.auth-box {
+    margin-top: 14px; padding: 14px; border-radius: 11px;
+    background: rgba(108,140,255,.08); border: 1px solid var(--border);
+}
+.auth-hint { color: var(--muted); font-size: 13px; margin-bottom: 10px; line-height: 1.5; }
+.auth-hint code { color: #ffd9a8; }
+
 .error {
     margin-top: 16px; padding: 14px 16px; border-radius: 11px;
     background: rgba(255,107,129,.12); border: 1px solid rgba(255,107,129,.4);
